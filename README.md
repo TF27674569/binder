@@ -195,11 +195,11 @@ public class TestAidlServices extends Service{
 ## **二、Binder分析**
 &nbsp;　　1.两个进程之间由于内存不共享，所以进程A无法引用到进程B的对象  
 &nbsp;　　&nbsp;　　A与B之间不能直接进行通讯。  
-
+![  ](https://github.com/TF27674569/binder/blob/master/image/process_no_share.png) 
 &nbsp;　　2.此时需要引入binder对象进行跨进程通讯的桥梁  
 &nbsp;　　&nbsp;　　binder对象中持有所有进程的pid并分配其内存  
 &nbsp;　　&nbsp;　　每个进程中又存在若干个aidl文件（包括系统自带）并在其注册  
-
+![  ](https://github.com/TF27674569/binder/blob/master/image/process_binder.png) 
 
 &nbsp;　　3.aidl文件结构包含stub（存根）和proxy（代理）   
 &nbsp;　　&nbsp;　　 stub：用于接收binder返回的信息  
