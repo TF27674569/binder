@@ -204,3 +204,112 @@ public class TestAidlServices extends Service{
 &nbsp;　　3.aidl文件结构包含stub（存根）和proxy（代理）   
 &nbsp;　　&nbsp;　　 stub：用于接收binder返回的信息  
 &nbsp;　　&nbsp;　　 proxy：用于向binder写入请求
+```java
+    private static final java.lang.String DESCRIPTOR = "com.binder.ITestAidlInterface";
+    public Stub() {
+        this.attachInterface(this, DESCRIPTOR);
+    }
+    public void attachInterface(IInterface owner, String descriptor) {
+        mOwner = owner;
+        mDescriptor = descriptor;
+    }
+```
+&nbsp;　　&nbsp;　　3.1初始化stub时调用attachInterface，并将DESCRIPTOR保存  
+```java
+ITestAidlInterface asInterface = ITestAidlInterface.Stub.asInterface(service);
+
+public static com.binder.ITestAidlInterface asInterface(android.os.IBinder obj) {
+            if ((obj == null)) {
+                return null;
+            }
+            android.os.IInterface iin = obj.queryLocalInterface(DESCRIPTOR);
+            if (((iin != null) && (iin instanceof com.binder.ITestAidlInterface))) {
+                return ((com.binder.ITestAidlInterface) iin);
+            }
+            return new com.binder.ITestAidlInterface.Stub.Proxy(obj);
+        }
+```
+&nbsp;　　&nbsp;　　3.2客户端调用asInterface将binder引用转为ITestAidlInterface 
+```java
+ public IInterface queryLocalInterface(String descriptor) {
+        if (mDescriptor.equals(descriptor)) {
+            return mOwner;
+        }
+        return null;
+    }
+```
+&nbsp;　　&nbsp;　　&nbsp;　　先判断是不是在同一进程里面如果在同一进程里面就直接使用本进程对象，否则初始化一个代理类进行跨进程访问  
+
+&nbsp;　　&nbsp;　　3.3当调用getName，getAge时
+```java
+
+                 Proxy(android.os.IBinder remote) {
+                      //跨进程的binder引用对象也就是TestAidlServices返回的IBinder引用
+                      mRemote = remote;
+                  }
+
+        // 将函数转为int值
+        static final int TRANSACTION_getName = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+        static final int TRANSACTION_getAge = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+            @Override
+            public java.lang.String getName() throws android.os.RemoteException {
+                // 需要往binder驱动读取的值
+                android.os.Parcel _data = android.os.Parcel.obtain();
+                // binder驱动返回的值
+                android.os.Parcel _reply = android.os.Parcel.obtain();
+                java.lang.String _result;
+                try {
+                    // 写入描述 用来判断是哪个aidl文件
+                    _data.writeInterfaceToken(DESCRIPTOR);
+                    // 调用transact函数
+                    mRemote.transact(Stub.TRANSACTION_getName, _data, _reply, 0);
+                    // 读有没有异常
+                    _reply.readException();
+                    // 读string
+                    _result = _reply.readString();
+                } finally {
+                    // 释放
+                    _reply.recycle();
+                    _data.recycle();
+                }
+                return _result;
+            }
+```
+&nbsp;　　&nbsp;　　3.4mRemote.transact(Stub.TRANSACTION_getName, _data, _reply, 0);
+```java
+ public final boolean transact(int code, Parcel data, Parcel reply,
+            int flags) throws RemoteException {
+       //...
+        boolean r = onTransact(code, data, reply, flags);
+        return r;
+    }
+
+```
+
+&nbsp;　　&nbsp;　　3.5 onTransact
+```java
+public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException {
+           // 根据code做对应函数的操作
+            switch (code) {
+                case INTERFACE_TRANSACTION: {
+                    reply.writeString(DESCRIPTOR);
+                    return true;
+                }
+                case TRANSACTION_getName: {
+                    data.enforceInterface(DESCRIPTOR);
+                    java.lang.String _result = this.getName();
+                    reply.writeNoException();
+                    reply.writeString(_result);
+                    return true;
+                }
+                case TRANSACTION_getAge: {
+                    data.enforceInterface(DESCRIPTOR);
+                    int _result = this.getAge();
+                    reply.writeNoException();
+                    reply.writeInt(_result);
+                    return true;
+                }
+            }
+            return super.onTransact(code, data, reply, flags);
+        }
+```
