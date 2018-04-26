@@ -313,3 +313,4 @@ public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel re
             return super.onTransact(code, data, reply, flags);
         }
 ```
+![  ](https://github.com/TF27674569/binder/blob/master/image/binder.bmp) 
